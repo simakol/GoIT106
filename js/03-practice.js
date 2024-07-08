@@ -4,10 +4,21 @@
  * Переписуємо на async/await
  */
 
-function fetchPokemon(pokemonId) {
-  return fetch(`https://pokeapi.co/api/v2/pokemon/${pokemonId}`).then(
-    (response) => response.json()
+async function fetchPokemon(pokemonId) {
+  const response = await fetch(
+    `https://pokeapi.co/api/v2/pokemon/${pokemonId}`
   );
+
+  if (!response.ok) {
+    throw new Error(response.status);
+  }
+
+  return await response.json();
+
+  //! old code
+  // return fetch(`https://pokeapi.co/api/v2/pokemon/${pokemonId}`).then(
+  //   (response) => response.json()
+  // );
 }
 
 const cardContainer = document.querySelector(".card-container");
@@ -15,21 +26,33 @@ const searchForm = document.querySelector(".search-form");
 
 searchForm.addEventListener("submit", onSearch);
 
-function onSearch(e) {
+async function onSearch(e) {
   e.preventDefault();
 
   const form = e.currentTarget;
   const searchQuery = form.elements.query.value;
 
-  fetchPokemon(searchQuery)
-    .then(renderPokemonCard)
-    .catch(onFetchError)
-    .finally(form.reset);
+  try {
+    const data = await fetchPokemon(searchQuery);
+
+    renderPokemonCard(data);
+  } catch (err) {
+    onFetchError(err);
+  } finally {
+    form.reset();
+  }
+
+  //! old code
+
+  // fetchPokemon(searchQuery)
+  //   .then(renderPokemonCard)
+  //   .catch(onFetchError)
+  //   .finally(form.reset);
 }
 
 function renderPokemonCard({ name, sprites, weight, height, abilities }) {
   const abilityListItems = abilities
-    .map((ability) => `<li class="list-group-item">${ability.name}</li>`)
+    .map(({ ability }) => `<li class="list-group-item">${ability.name}</li>`)
     .join("");
 
   const markup = `<div class="card">
